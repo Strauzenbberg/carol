@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Portfolio Visual de Carol - Fotografia e Vídeo">
+    <title>CAROL | Visual Diary</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;600&family=Inter:wght@300&display=swap" rel="stylesheet">
+
+    <style>
+        /* * CSS VARIABLES & RESET
+         * Configuração base para consistência e tema Dark Luxury 
+         */
+        :root {
+            --bg-color: #050505;
+            --text-color: #f4f4f4;
+            --accent-color: #d4af37; /* Dourado sutil para detalhes micro */
+            --glass-bg: rgba(5, 5, 5, 0.7);
+            --transition-speed: 0.4s;
+            --gap-size: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* * HEADER - GLASSMORPHISM
+         * Fixo no topo, minimalista.
+         */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.5rem 2rem;
+            z-index: 100;
+            display: flex;
+            justify-content: center; /* Centralizado para foco total */
+            align-items: center;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            transition: all 0.3s ease;
+        }
+
+        h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        /* * MAIN GALLERY - MASONRY LAYOUT
+         * Colunas que se adaptam ao tamanho da tela.
+         */
+        .gallery-container {
+            column-count: 4; /* Desktop: 4 colunas */
+            column-gap: var(--gap-size);
+            padding: 120px var(--gap-size) 40px var(--gap-size);
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .gallery-item {
+            position: relative;
+            margin-bottom: var(--gap-size);
+            break-inside: avoid;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: zoom-in;
+            opacity: 0; /* Começa invisível para animação */
+            transform: translateY(30px);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease;
+        }
+        
+        /* Classe ativada via JS quando o item entra na tela */
+        .gallery-item.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .gallery-item img, 
+        .gallery-item video {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.7s ease, filter 0.3s ease;
+            filter: grayscale(10%); /* Leve desaturação para ar "chique" */
+        }
+
+        /* Efeito Hover */
+        .gallery-item:hover img,
+        .gallery-item:hover video {
+            transform: scale(1.03);
+            filter: grayscale(0%);
+        }
+
+        /* Overlay sutil no hover (opcional, mantendo o minimalismo) */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .gallery-item:hover .overlay {
+            opacity: 1;
+        }
+
+        /* * LIGHTBOX (MODAL)
+         * Para visualização em tela cheia
+         */
+        .lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .lightbox.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .lightbox-content {
+            max-width: 90vw;
+            max-height: 90vh;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            border-radius: 4px;
+            /* Garante que a imagem vertical caiba na tela */
+            object-fit: contain; 
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            font-size: 3rem;
+            color: #fff;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-weight: 100;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: var(--accent-color);
+        }
+
+        /* * RESPONSIVIDADE
+         * Mobile First ajustado para telas maiores
+         */
+        @media (max-width: 1024px) {
+            .gallery-container {
+                column-count: 3;
+            }
+            h1 { font-size: 2rem; }
+        }
+
+        @media (max-width: 768px) {
+            .gallery-container {
+                column-count: 2;
+                padding: 100px 10px 20px 10px;
+            }
+            h1 { font-size: 1.8rem; letter-spacing: 0.2em; }
+        }
+
+        @media (max-width: 480px) {
+            .gallery-container {
+                column-count: 1; /* Uma coluna no mobile para foco máximo */
+            }
+            .close-btn { top: 20px; right: 20px; font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header id="header">
+        <h1>CAROL</h1>
+    </header>
+
+    <main class="gallery-container" id="gallery">
+        </main>
+
+    <div class="lightbox" id="lightbox">
+        <span class="close-btn">&times;</span>
+        </div>
+
+    <script>
+        /**
+         * SCRIPT - Lógica de Renderização e Interação
+         * Foco: Performance, Lazy Loading e UX Fluida.
+         */
+
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 1. DADOS DAS MÍDIAS
+            // MODIFICAÇÃO: A primeira imagem agora é 'carol.jpg' conforme solicitado.
+            const mediaItems = [
+                { type: 'image', src: 'carol.jpg' }, // IMAGEM PRINCIPAL
+                { type: 'image', src: 'https://placehold.co/600x800/111/555?text=Photo+02' },
+                { type: 'image', src: 'https://placehold.co/600x1000/111/666?text=Photo+03' },
+                { type: 'video', src: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+                { type: 'image', src: 'https://placehold.co/600x900/111/777?text=Photo+05' },
+                { type: 'image', src: 'https://placehold.co/600x750/111/888?text=Photo+06' },
+                { type: 'image', src: 'https://placehold.co/600x950/111/999?text=Photo+07' },
+                { type: 'image', src: 'https://placehold.co/600x850/111/aaa?text=Photo+08' },
+                { type: 'image', src: 'https://placehold.co/600x900/111/bbb?text=Photo+09' },
+                { type: 'image', src: 'https://placehold.co/600x1100/111/ccc?text=Photo+10' },
+                { type: 'image', src: 'https://placehold.co/600x800/111/ddd?text=Photo+11' },
+                { type: 'image', src: 'https://placehold.co/600x920/111/eee?text=Photo+12' }
+            ];
+
+            const galleryContainer = document.getElementById('gallery');
+            const lightbox = document.getElementById('lightbox');
+            const closeBtn = document.querySelector('.close-btn');
+            let lightboxContent = null;
+
+            // 2. FUNÇÃO DE RENDERIZAÇÃO
+            function renderGallery() {
+                mediaItems.forEach((item, index) => {
+                    const div = document.createElement('div');
+                    div.classList.add('gallery-item');
+                    
+                    // Delay escalonado para animação inicial
+                    div.style.transitionDelay = `${index * 50}ms`;
+
+                    let mediaElement;
+
+                    if (item.type === 'video') {
+                        mediaElement = document.createElement('video');
+                        mediaElement.src = item.src;
+                        mediaElement.muted = true;
+                        mediaElement.loop = true;
+                        mediaElement.autoplay = true;
+                        mediaElement.playsInline = true; 
+                    } else {
+                        mediaElement = document.createElement('img');
+                        mediaElement.src = item.src;
+                        // Ajuste no alt text da primeira imagem para SEO
+                        mediaElement.alt = index === 0 ? "Carol Portrait" : `Carol Visual ${index + 1}`;
+                        mediaElement.loading = "lazy"; 
+                    }
+
+                    // Evento de Click para Lightbox
+                    div.addEventListener('click', () => openLightbox(item));
+
+                    div.appendChild(mediaElement);
+                    
+                    // Adicionar overlay sutil
+                    const overlay = document.createElement('div');
+                    overlay.classList.add('overlay');
+                    div.appendChild(overlay);
+
+                    galleryContainer.appendChild(div);
+                });
+                
+                // Iniciar observador de scroll após renderizar
+                observeItems();
+            }
+
+            // 3. INTERSECTION OBSERVER (Animação ao rolar)
+            function observeItems() {
+                const observerOptions = {
+                    threshold: 0.1,
+                    rootMargin: "0px 0px -50px 0px"
+                };
+
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('visible');
+                            observer.unobserve(entry.target); 
+                        }
+                    });
+                }, observerOptions);
+
+                document.querySelectorAll('.gallery-item').forEach(item => {
+                    observer.observe(item);
+                });
+            }
+
+            // 4. LÓGICA DO LIGHTBOX
+            function openLightbox(item) {
+                if (lightboxContent) {
+                    lightboxContent.remove();
+                }
+
+                if (item.type === 'video') {
+                    lightboxContent = document.createElement('video');
+                    lightboxContent.src = item.src;
+                    lightboxContent.controls = true;
+                    lightboxContent.autoplay = true;
+                    lightboxContent.style.maxWidth = "90vw";
+                    lightboxContent.style.maxHeight = "90vh";
+                } else {
+                    lightboxContent = document.createElement('img');
+                    lightboxContent.src = item.src;
+                    lightboxContent.classList.add('lightbox-content');
+                }
+
+                lightbox.appendChild(lightboxContent);
+                lightbox.classList.add('active');
+                document.body.style.overflow = 'hidden'; 
+            }
+
+            function closeLightbox() {
+                lightbox.classList.remove('active');
+                document.body.style.overflow = 'auto'; 
+                
+                const video = lightbox.querySelector('video');
+                if(video) video.pause();
+            }
+
+            // Eventos de fechar
+            closeBtn.addEventListener('click', closeLightbox);
+            
+            lightbox.addEventListener('click', (e) => {
+                if (e.target === lightbox) {
+                    closeLightbox();
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+                    closeLightbox();
+                }
+            });
+
+            // Inicializar
+            renderGallery();
+        });
+    </script>
+</body>
+</html>
